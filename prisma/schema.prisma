@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum TransactionType {
+  income
+  expense
+}
+
+model Category {
+  id           String         @id @default(uuid()) @db.Uuid
+  name         String
+  color        String
+  icon         String
+  transactions Transaction[]
+  rules        LearningRule[]
+
+  @@unique([name])
+  @@map("categories")
+}
+
+model Transaction {
+  id          String          @id @default(uuid()) @db.Uuid
+  userId      String          @map("user_id") @db.Uuid
+  amount      Decimal         @db.Decimal(14, 2)
+  type        TransactionType
+  categoryId  String          @map("category_id") @db.Uuid
+  description String
+  date        DateTime        @db.Date
+  createdAt   DateTime        @default(now()) @map("created_at")
+  category    Category        @relation(fields: [categoryId], references: [id])
+
+  @@index([userId, date])
+  @@index([userId, description])
+  @@map("transactions")
+}
+
+model LearningRule {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  keyword    String
+  categoryId String   @map("category_id") @db.Uuid
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([userId, keyword])
+  @@index([userId])
+  @@map("learning_rules")
+}
